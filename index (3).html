@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f2937">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Find a Game">
+<title>Find a Game</title>
+<style>
+  :root {
+    --bg: #f5f5f4;
+    --card: #ffffff;
+    --text: #1c1917;
+    --muted: #78716c;
+    --line: #e7e5e4;
+    --accent: #c2410c;
+    --accent-soft: #ffedd5;
+    --accent-text: #ffffff;
+    --chip: #e7e5e4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1917;
+      --card: #292524;
+      --text: #fafaf9;
+      --muted: #a8a29e;
+      --line: #44403c;
+      --accent: #fb923c;
+      --accent-soft: #431407;
+      --accent-text: #1c1917;
+      --chip: #44403c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
+  }
+  main { max-width: 640px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 8px; }
+  h1 { font-size: 22px; margin: 0; }
+  button, select, input { font: inherit; color: inherit; }
+  .icon-btn {
+    background: var(--chip); border: 0; border-radius: 10px;
+    width: 40px; height: 40px; font-size: 18px; cursor: pointer;
+  }
+  .panel {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  input[type=search], input[type=number], select {
+    width: 100%; height: 44px; padding: 0 12px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .full { grid-column: 1 / -1; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    background: var(--chip); border: 0; border-radius: 999px;
+    padding: 8px 16px; cursor: pointer; font-size: 14px;
+  }
+  .chip[aria-pressed=true] { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .actions { display: flex; gap: 10px; margin-top: 12px; }
+  .primary {
+    flex: 1; height: 48px; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: var(--accent-text); font-weight: 700; font-size: 16px;
+  }
+  .secondary {
+    height: 48px; padding: 0 18px; border-radius: 12px; cursor: pointer;
+    background: transparent; border: 1px solid var(--line);
+  }
+  .count { color: var(--muted); font-size: 14px; margin: 14px 2px 8px; }
+  .banner a { color: inherit; font-weight: 600; }
+  .banner {
+    background: var(--accent-soft); border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 12px; font-size: 14px;
+  }
+  .pick {
+    background: var(--accent-soft); border: 2px solid var(--accent);
+    border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .pick .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .pick .name { font-size: 22px; font-weight: 700; margin: 2px 0 6px; }
+  .pick .row { display: flex; gap: 10px; margin-top: 10px; }
+  .pick .row button { flex: 1; height: 42px; border-radius: 10px; border: 1px solid var(--accent); background: transparent; cursor: pointer; }
+  details.game {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; margin-bottom: 8px;
+  }
+  details.game summary { list-style: none; cursor: pointer; padding: 12px 14px; }
+  details.game summary::-webkit-details-marker { display: none; }
+  .gname { font-weight: 600; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 4px; font-size: 14px; color: var(--muted); }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    background: var(--chip); border-radius: 6px; padding: 1px 6px; color: var(--text);
+  }
+  .more { padding: 0 14px 12px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); }
+  .more div { padding-top: 6px; }
+  .more b { color: var(--text); font-weight: 600; }
+  .empty { text-align: center; color: var(--muted); padding: 32px 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🎲 Find a Game</h1>
+    <div style="display:flex;gap:8px">
+      <button class="icon-btn" id="settings" aria-label="Set sheet link" title="Set sheet link">⚙</button>
+      <button class="icon-btn" id="refresh" aria-label="Reload from sheet" title="Reload from sheet">↻</button>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+
+  <section class="panel" aria-label="Filters">
+    <div class="grid">
+      <div class="full">
+        <label for="q">Search</label>
+        <input type="search" id="q" placeholder="Game name…" autocomplete="off">
+      </div>
+      <div>
+        <label for="players">Number of players</label>
+        <input type="number" id="players" inputmode="numeric" min="1" max="30" placeholder="Any">
+      </div>
+      <div>
+        <label for="time">Max play time</label>
+        <select id="time">
+          <option value="">Any</option>
+          <option value="15">15 min</option>
+          <option value="30">30 min</option>
+          <option value="45">45 min</option>
+          <option value="60">1 hour</option>
+          <option value="90">1.5 hours</option>
+          <option value="120">2 hours</option>
+          <option value="180">3 hours</option>
+        </select>
+      </div>
+      <div>
+        <label for="diff">Max difficulty</label>
+        <select id="diff">
+          <option value="">Any</option>
+          <option value="1">1 (very easy)</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </div>
+      <div>
+        <label for="learn">Max learning time</label>
+        <select id="learn">
+          <option value="">Any</option>
+          <option value="2">2 min</option>
+          <option value="5">5 min</option>
+          <option value="10">10 min</option>
+          <option value="15">15 min</option>
+        </select>
+      </div>
+      <div>
+        <label for="loc">Location</label>
+        <select id="loc"><option value="">Any</option></select>
+      </div>
+      <div>
+        <label for="size">Size</label>
+        <select id="size"><option value="">Any</option></select>
+      </div>
+      <div class="full">
+        <label>Type</label>
+        <div class="chips" id="modes">
+          <button class="chip" data-mode="PVP" aria-pressed="false">PVP</button>
+          <button class="chip" data-mode="PVE" aria-pressed="false">PVE</button>
+          <button class="chip" data-mode="TEAM" aria-pressed="false">TEAM</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="random">🎲 Pick one for me</button>
+      <button class="secondary" id="reset">Reset</button>
+    </div>
+  </section>
+
+  <div id="pick"></div>
+  <details class="panel" id="diag" style="margin-top:16px"><summary style="cursor:pointer;color:var(--muted)">Diagnostics</summary><pre id="diagout" style="white-space:pre-wrap;word-break:break-word;font-size:12px"></pre></details>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</main>
+
+<script>
+// ---- Settings ---------------------------------------------------------
+const SHEET_ID = "1wp7-TWogLE_OBGGpMlH_dY4tkPNnDzQYdBb4msSHVDE";
+const SHEET_NAME = "Sheet1";   // the name of the tab at the bottom of the sheet
+const CSV_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID +
+  "/gviz/tq?tqx=out:csv&headers=0&sheet=" + encodeURIComponent(SHEET_NAME);
+const CACHE_KEY = "boardgames-cache-v1";
+const URL_KEY = "boardgames-custom-url";
+const EXPORT_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/export?format=csv";
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+// -----------------------------------------------------------------------
+
+let games = [];
+let picked = null;
+const $ = id => document.getElementById(id);
+
+const clean = s => String(s == null ? "" : s).replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+const num = v => {
+  const raw = clean(v);
+  const clock = raw.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+  if (clock) return parseInt(clock[1], 10) * 60 + parseInt(clock[2], 10);
+  const s = raw.replace(",", ".").replace(/[^\d.\-]/g, "");
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i++; } else inQ = false;
+      } else cell += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+function buildGames(rows) {
+  const hi = rows.findIndex(r => clean(r[0]).toLowerCase() === "navn");
+  if (hi < 0) throw new Error("Could not find the header row (a cell that says 'Navn').");
+  const norm = x => clean(x).normalize("NFC").replace(/\u00a0/g, " ").replace(/\s+/g, " ").toLowerCase();
+  const h = rows[hi].map(norm);
+  const col = (...keys) => h.findIndex(x => keys.some(k => x.startsWith(k)));
+  const c = {
+    name: col("navn"), minP: col("min spillere"), maxP: col("max spillere"),
+    minT: col("min tid"), maxT: col("max tid"), mode: col("pvp"),
+    learn: col("læringstid"), diff: col("sværhed"), insert: col("insert"),
+    exp: col("expansions"), size: col("størrelse"), loc: col("lokation")
+  };
+  // Google's feed drops the header text of number columns, so fall back to the sheet's fixed layout (A..L)
+  const defaults = { name: 0, minP: 1, maxP: 2, minT: 3, maxT: 4, mode: 5, learn: 6, diff: 7, insert: 8, exp: 9, size: 10, loc: 11 };
+  const missing = Object.keys(c).filter(k => c[k] < 0);
+  Object.keys(c).forEach(k => { if (c[k] < 0) c[k] = defaults[k]; });
+  window.__missingCols = missing;
+  window.__headers = rows[hi].map(clean).filter(Boolean);
+  window.__rawRows = rows.slice(hi, hi + 6).map(r => r.slice(0, 13).map(clean));
+  const out = [];
+  for (let i = hi + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const name = clean(r[c.name]);
+    if (!name) continue;
+    const modes = clean(r[c.mode]).toUpperCase().split("/").map(s => s.trim()).filter(Boolean);
+    out.push({
+      name,
+      minP: num(r[c.minP]), maxP: num(r[c.maxP]),
+      minT: num(r[c.minT]), maxT: num(r[c.maxT]),
+      modes,
+      learn: num(r[c.learn]), diff: num(r[c.diff]),
+      insert: clean(r[c.insert]), exp: num(r[c.exp]),
+      size: clean(r[c.size]), loc: clean(r[c.loc]),
+      note: c.loc >= 0 ? clean(r[c.loc + 1]) : ""
+    });
+  }
+  return out;
+}
+
+async function fetchCSV(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const text = await res.text();
+  if (/^\s*<(!doctype|html)/i.test(text)) throw new Error("Google returned a web page instead of data");
+  return buildGames(parseCSV(text));
+}
+
+async function load() {
+  $("banner").innerHTML = "";
+  $("count").textContent = "Loading…";
+  const custom = store.get(URL_KEY);
+  const urls = (custom ? [custom] : []).concat([CSV_URL, EXPORT_URL]);
+  let lastErr = null, ok = false;
+  for (const u of urls) {
+    try { games = await fetchCSV(u); ok = true; break; } catch (e) { lastErr = e; }
+  }
+  if (ok) {
+    store.set(CACHE_KEY, JSON.stringify(games));
+    const mc = window.__missingCols || [];
+    const withTime = games.filter(g => g.maxT != null || g.minT != null).length;
+    const withDiff = games.filter(g => g.diff != null).length;
+    const withLearn = games.filter(g => g.learn != null).length;
+    const withLoc = games.filter(g => g.loc).length;
+    const withSize = games.filter(g => g.size).length;
+    const bad = !withTime || !withDiff || !withLearn || !withLoc || !withSize;
+    if (bad) {
+      $("banner").innerHTML = '<div class="banner"><b>Some columns could not be read.</b><br>' +
+        (mc.length ? "Headers missing (used column positions): " + esc(mc.join(", ")) + ".<br>" : "") +
+        "Games with time: " + withTime + ", difficulty: " + withDiff + ", learning time: " + withLearn +
+        ", location: " + withLoc + ", size: " + withSize + " of " + games.length + ".<br>" +
+        "Headers seen: " + esc((window.__headers || []).join(" | ")) + "</div>";
+    }
+  } else {
+    let cached = null;
+    try { cached = JSON.parse(store.get(CACHE_KEY) || "null"); } catch (e) {}
+    const msg = esc(lastErr ? lastErr.message : "unknown error");
+    if (cached && cached.length) {
+      games = cached;
+      $("banner").innerHTML = '<div class="banner">Could not reach the sheet (' + msg + '), so this is the last saved list. <a href="#" id="fixlink">Set sheet link</a></div>';
+    } else {
+      games = [];
+      $("banner").innerHTML = '<div class="banner"><b>Could not load the sheet</b> (' + msg + '). The browser is probably blocked from reading it. Tap ⚙ and paste the "Publish to web" CSV link. <a href="#" id="fixlink">Set sheet link</a></div>';
+    }
+    const fl = $("fixlink");
+    if (fl) fl.onclick = e => { e.preventDefault(); setLink(); };
+  }
+  fillSelect("loc", games.map(g => g.loc));
+  fillSelect("size", games.map(g => g.size));
+  render();
+}
+
+function setLink() {
+  const cur = store.get(URL_KEY) || "";
+  const v = prompt("Paste the published CSV link for your sheet (leave empty to remove):", cur);
+  if (v === null) return;
+  if (v.trim()) store.set(URL_KEY, v.trim()); else store.del(URL_KEY);
+  load();
+}
+
+function fillSelect(id, values) {
+  const sel = $(id), cur = sel.value;
+  const uniq = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, "da"));
+  sel.innerHTML = '<option value="">Any</option>' + uniq.map(v => '<option value="' + esc(v) + '">' + esc(v) + "</option>").join("");
+  if (uniq.includes(cur)) sel.value = cur;
+}
+
+function activeModes() {
+  return [...document.querySelectorAll("#modes .chip[aria-pressed=true]")].map(b => b.dataset.mode);
+}
+
+function filtered() {
+  const q = clean($("q").value).toLowerCase();
+  const players = num($("players").value);
+  const time = num($("time").value);
+  const diff = num($("diff").value);
+  const learn = num($("learn").value);
+  const loc = $("loc").value, size = $("size").value;
+  const modes = activeModes();
+  return games.filter(g => {
+    if (q && !g.name.toLowerCase().includes(q)) return false;
+    if (players != null) {
+      if (g.minP == null) return false;
+      const max = g.maxP != null ? g.maxP : g.minP;
+      if (players < g.minP || players > max) return false;
+    }
+    if (time != null) {
+      const t = g.maxT != null ? g.maxT : g.minT;
+      if (t == null || t > time) return false;
+    }
+    if (diff != null && (g.diff == null || g.diff > diff)) return false;
+    if (learn != null && (g.learn == null || g.learn > learn)) return false;
+    if (loc && g.loc !== loc) return false;
+    if (size && g.size !== size) return false;
+    if (modes.length && !modes.some(m => g.modes.includes(m))) return false;
+    return true;
+  }).sort((a, b) => a.name.localeCompare(b.name, "da"));
+}
+
+const range = (a, b, unit) => {
+  if (a == null && b == null) return "?";
+  if (b == null || a === b) return a + (unit || "");
+  if (a == null) return b + (unit || "");
+  return a + "–" + b + (unit || "");
+};
+const insertText = v => ({ "Insert": "Has insert", "Unødvændig": "Insert not needed", "Mangler": "Insert missing" }[v] || v);
+
+function metaLine(g) {
+  const bits = [
+    "👥 " + range(g.minP, g.maxP),
+    "⏱ " + range(g.minT, g.maxT, " min"),
+    "⚖ " + (g.diff != null ? g.diff : "?") + "/5"
+  ];
+  const tags = g.modes.map(m => '<span class="tag">' + esc(m) + "</span>").join(" ");
+  return '<div class="meta"><span>' + bits.join('</span><span>') + "</span>" + (tags ? "<span>" + tags + "</span>" : "") + "</div>";
+}
+
+function moreLines(g) {
+  const lines = [];
+  if (g.loc) lines.push("<b>Location:</b> " + esc(g.loc) + (g.note ? " (" + esc(g.note) + ")" : ""));
+  if (g.size) lines.push("<b>Size:</b> " + esc(g.size));
+  if (g.learn != null) lines.push("<b>Learning time:</b> " + g.learn + " min");
+  if (g.insert) lines.push("<b>Insert:</b> " + esc(insertText(g.insert)));
+  if (g.exp) lines.push("<b>Expansions:</b> " + g.exp);
+  return lines.map(l => "<div>" + l + "</div>").join("");
+}
+
+function renderDiag() {
+  const el = $("diagout");
+  if (!el) return;
+  const sample = games.slice(0, 4).map(g => JSON.stringify({ name: g.name, minP: g.minP, maxP: g.maxP, minT: g.minT, maxT: g.maxT, diff: g.diff, learn: g.learn, size: g.size, loc: g.loc }));
+  el.textContent = "Raw rows from sheet:\n" + (window.__rawRows || []).map(r => JSON.stringify(r)).join("\n") +
+    "\n\nParsed:\n" + sample.join("\n") +
+    "\n\nFilter now: players=" + $("players").value + " time=" + $("time").value + " diff=" + $("diff").value +
+    " learn=" + $("learn").value + " loc=" + $("loc").value + " size=" + $("size").value;
+}
+
+function render() {
+  renderDiag();
+  const list = filtered();
+  $("count").textContent = games.length
+    ? list.length + " of " + games.length + " games"
+    : "";
+  $("list").innerHTML = list.length
+    ? list.map(g =>
+        '<details class="game"><summary><div class="gname">' + esc(g.name) + "</div>" + metaLine(g) +
+        '</summary><div class="more">' + moreLines(g) + "</div></details>").join("")
+    : (games.length ? '<div class="empty">No games match these filters.</div>' : "");
+
+  if (picked) {
+    const g = games.find(x => x.name === picked);
+    if (g) {
+      $("pick").innerHTML =
+        '<div class="pick"><div class="label">Tonight\'s pick</div><div class="name">' + esc(g.name) + "</div>" +
+        metaLine(g) + '<div class="more" style="border:0;padding:6px 0 0">' + moreLines(g) + "</div>" +
+        '<div class="row"><button id="again">Another one</button><button id="closepick">Close</button></div></div>';
+      $("again").onclick = pickRandom;
+      $("closepick").onclick = () => { picked = null; render(); };
+      return;
+    }
+  }
+  $("pick").innerHTML = "";
+}
+
+function pickRandom() {
+  const list = filtered();
+  if (!list.length) { picked = null; render(); return; }
+  let g;
+  do { g = list[Math.floor(Math.random() * list.length)]; } while (list.length > 1 && g.name === picked);
+  picked = g.name;
+  render();
+  $("pick").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function resetAll() {
+  ["q", "players", "time", "diff", "learn", "loc", "size"].forEach(id => $(id).value = "");
+  document.querySelectorAll("#modes .chip").forEach(b => b.setAttribute("aria-pressed", "false"));
+  picked = null;
+  render();
+}
+
+["q", "players", "time", "diff", "learn", "loc", "size"].forEach(id => {
+  $(id).addEventListener("input", () => { picked = null; render(); });
+});
+document.querySelectorAll("#modes .chip").forEach(b => b.addEventListener("click", () => {
+  b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true");
+  picked = null;
+  render();
+}));
+$("random").addEventListener("click", pickRandom);
+$("reset").addEventListener("click", resetAll);
+$("refresh").addEventListener("click", load);
+$("settings").addEventListener("click", setLink);
+
+load();
+</script>
+</body>
+</html>
