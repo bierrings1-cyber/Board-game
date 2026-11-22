@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1e3a8a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Find a Game">
+<title>Find a Game</title>
+<style>
+  :root {
+    --bg: #f5f5f4;
+    --card: #ffffff;
+    --text: #1c1917;
+    --muted: #78716c;
+    --line: #e7e5e4;
+    --accent: #2563eb;
+    --accent-soft: #dbeafe;
+    --accent-text: #ffffff;
+    --chip: #e7e5e4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1917;
+      --card: #292524;
+      --text: #fafaf9;
+      --muted: #a8a29e;
+      --line: #44403c;
+      --accent: #60a5fa;
+      --accent-soft: #172554;
+      --accent-text: #0b1220;
+      --chip: #44403c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px);
+  }
+  main { max-width: 640px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 16px 0 8px; }
+  h1 { font-size: 22px; margin: 0; }
+  button, select, input { font: inherit; color: inherit; }
+  .icon-btn {
+    background: var(--chip); border: 0; border-radius: 10px;
+    width: 40px; height: 40px; font-size: 18px; cursor: pointer;
+  }
+  .panel {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  input[type=search], input[type=number], select {
+    width: 100%; height: 44px; padding: 0 12px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+  }
+  .full { grid-column: 1 / -1; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .chip {
+    background: var(--chip); border: 0; border-radius: 999px;
+    padding: 8px 16px; cursor: pointer; font-size: 14px;
+  }
+  .chip[aria-pressed=true] { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+  .actions { display: flex; gap: 10px; margin-top: 12px; }
+  .primary {
+    flex: 1; height: 48px; border: 0; border-radius: 12px; cursor: pointer;
+    background: var(--accent); color: var(--accent-text); font-weight: 700; font-size: 16px;
+  }
+  .secondary {
+    height: 48px; padding: 0 18px; border-radius: 12px; cursor: pointer;
+    background: transparent; border: 1px solid var(--line);
+  }
+  .count { color: var(--muted); font-size: 14px; margin: 14px 2px 8px; }
+  .banner a { color: inherit; font-weight: 600; }
+  .banner {
+    background: var(--accent-soft); border-radius: 10px;
+    padding: 10px 12px; margin-bottom: 12px; font-size: 14px;
+  }
+  .pick {
+    background: var(--accent-soft); border: 2px solid var(--accent);
+    border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  }
+  .pick .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .pick .name { font-size: 22px; font-weight: 700; margin: 2px 0 6px; }
+  .pick .row { display: flex; gap: 10px; margin-top: 10px; }
+  .pick .row button { flex: 1; height: 42px; border-radius: 10px; border: 1px solid var(--accent); background: transparent; cursor: pointer; }
+  details.game {
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 12px; margin-bottom: 8px;
+  }
+  details.game summary { list-style: none; cursor: pointer; padding: 12px 14px; }
+  details.game summary::-webkit-details-marker { display: none; }
+  .gname { font-weight: 600; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 4px; font-size: 14px; color: var(--muted); }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    background: var(--chip); border-radius: 6px; padding: 1px 6px; color: var(--text);
+  }
+  .tag.pvp  { background: #fee2e2; color: #991b1b; }
+  .tag.pve  { background: #dcfce7; color: #166534; }
+  .tag.team { background: #ede9fe; color: #5b21b6; }
+  .tag.req  { background: #fef3c7; color: #92400e; }
+  .tag.lent { background: #e0f2fe; color: #075985; }
+  @media (prefers-color-scheme: dark) {
+    .tag.pvp  { background: #7f1d1d; color: #fecaca; }
+    .tag.pve  { background: #14532d; color: #bbf7d0; }
+    .tag.team { background: #4c1d95; color: #ddd6fe; }
+    .tag.req  { background: #78350f; color: #fde68a; }
+    .tag.lent { background: #0c4a6e; color: #bae6fd; }
+  }
+  .more { padding: 0 14px 12px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); }
+  .more div { padding-top: 6px; }
+  .more b { color: var(--text); font-weight: 600; }
+  .empty { text-align: center; color: var(--muted); padding: 32px 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>🎲 <span data-i18n="title">Find a Game</span></h1>
+    <div style="display:flex;gap:8px">
+      <button class="icon-btn" id="lang" aria-label="Language" title="Language" style="font-size:14px;font-weight:700">DA</button>
+      <button class="icon-btn" id="settings" data-i18n-title="setLink" aria-label="Set sheet link" title="Set sheet link">⚙</button>
+      <button class="icon-btn" id="refresh" data-i18n-title="reload" aria-label="Reload from sheet" title="Reload from sheet">↻</button>
+    </div>
+  </header>
+
+  <div id="banner"></div>
+
+  <section class="panel" aria-label="Filters">
+    <div class="grid">
+      <div class="full">
+        <label for="q" data-i18n="search">Search</label>
+        <input type="search" id="q" data-i18n-ph="searchPh" placeholder="Game name…" autocomplete="off">
+      </div>
+      <div>
+        <label for="players" data-i18n="players">Number of players</label>
+        <input type="number" id="players" inputmode="numeric" min="1" max="30" data-i18n-ph="any" placeholder="Any">
+      </div>
+      <div>
+        <label for="time" data-i18n="time">Max play time</label>
+        <select id="time"></select>
+      </div>
+      <div>
+        <label for="diff" data-i18n="diff">Max difficulty</label>
+        <select id="diff"></select>
+      </div>
+      <div>
+        <label for="learn" data-i18n="learn">Max learning time</label>
+        <select id="learn"></select>
+      </div>
+      <div>
+        <label for="loc" data-i18n="loc">Location</label>
+        <select id="loc"></select>
+      </div>
+      <div>
+        <label for="size" data-i18n="size">Size</label>
+        <select id="size"></select>
+      </div>
+      <div class="full">
+        <label data-i18n="type">Type</label>
+        <div class="chips" id="modes">
+          <button class="chip" data-mode="PVP" aria-pressed="false">PVP</button>
+          <button class="chip" data-mode="PVE" aria-pressed="false">PVE</button>
+          <button class="chip" data-mode="TEAM" aria-pressed="false">TEAM</button>
+        </div>
+      </div>
+      <div class="full">
+        <label data-i18n="reqLabel">Language &amp; skills</label>
+        <div class="chips" id="reqs">
+          <button class="chip" data-req="num" data-i18n="noNum" aria-pressed="false">No number skills needed</button>
+          <button class="chip" data-req="eng" data-i18n="noEng" aria-pressed="false">No English needed</button>
+          <button class="chip" data-req="lent" data-i18n="noLent" aria-pressed="false">Hide lent-out games</button>
+        </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="random" data-i18n="random">🎲 Pick one for me</button>
+      <button class="secondary" id="reset" data-i18n="reset">Reset</button>
+    </div>
+  </section>
+
+  <div id="pick"></div>
+  <details class="panel" id="diag" style="margin-top:16px"><summary style="cursor:pointer;color:var(--muted)">Diagnostics</summary><pre id="diagout" style="white-space:pre-wrap;word-break:break-word;font-size:12px"></pre></details>
+  <div class="count" id="count"></div>
+  <div id="list"></div>
+</main>
+
+<script>
+// ---- Settings ---------------------------------------------------------
+const SHEET_ID = "1wp7-TWogLE_OBGGpMlH_dY4tkPNnDzQYdBb4msSHVDE";
+const SHEET_NAME = "Sheet1";   // the name of the tab at the bottom of the sheet
+const CSV_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID +
+  "/gviz/tq?tqx=out:csv&headers=0&sheet=" + encodeURIComponent(SHEET_NAME);
+const CACHE_KEY = "boardgames-cache-v1";
+const URL_KEY = "boardgames-custom-url";
+const EXPORT_URL = "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/export?format=csv";
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+// -----------------------------------------------------------------------
+
+
+let games = [];
+let picked = null;
+const $ = id => document.getElementById(id);
+
+const clean = s => String(s == null ? "" : s).replace(/[\u200B-\u200D\uFEFF]/g, "").trim();
+const num = v => {
+  const raw = clean(v);
+  const clock = raw.match(/^(\d+):(\d{2})(?::(\d{2}))?$/);
+  if (clock) return parseInt(clock[1], 10) * 60 + parseInt(clock[2], 10);
+  const s = raw.replace(",", ".").replace(/[^\d.\-]/g, "");
+  const n = parseFloat(s);
+  return isNaN(n) ? null : n;
+};
+const yes = v => {
+  const t = clean(v).toLowerCase();
+  if (!t) return false;
+  return !["nej", "no", "false", "0", "n", "-", "nope"].includes(t);
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+
+// ---- Language ---------------------------------------------------------
+const LANG_KEY = "boardgames-lang";
+const I18N = {
+  en: {
+    title: "Find a Game", search: "Search", searchPh: "Game name…", players: "Number of players", any: "Any",
+    time: "Max play time", diff: "Max difficulty", learn: "Max learning time", loc: "Location", size: "Size", type: "Type",
+    reqLabel: "Language, skills & availability", noNum: "No number skills needed", noEng: "No English needed", noLent: "Hide lent-out games",
+    random: "🎲 Pick one for me", reset: "Reset", setLink: "Set sheet link", reload: "Reload from sheet",
+    veryEasy: "(very easy)", loading: "Loading…", count: "{n} of {m} games", none: "No games match these filters.",
+    pickLabel: "Tonight's pick", again: "Another one", close: "Close",
+    tagNum: "🔢 Numbers", tagEng: "🇬🇧 English", tagLent: "Lent out",
+    lLoc: "Location:", lBorrower: "Borrowed by:", lNum: "Needs number skills", lEng: "Needs English understanding",
+    lSize: "Size:", lLearn: "Learning time:", lInsert: "Insert:", lExp: "Expansions:",
+    insHas: "Has insert", insNo: "Insert not needed", insMissing: "Insert missing",
+    errCached: "Could not reach the sheet ({e}), so this is the last saved list.",
+    errNone: "Could not load the sheet ({e}). The browser is probably blocked from reading it. Tap ⚙ and paste the \"Publish to web\" CSV link.",
+    promptLink: "Paste the published CSV link for your sheet (leave empty to remove):",
+    hour: "hour", hours: "hours", langBtn: "DA"
+  },
+  da: {
+    title: "Find et brætspil", search: "Søg", searchPh: "Spilnavn…", players: "Antal spillere", any: "Alle",
+    time: "Maks. spilletid", diff: "Maks. sværhedsgrad", learn: "Maks. læringstid", loc: "Lokation", size: "Størrelse", type: "Type",
+    reqLabel: "Sprog, færdigheder og tilgængelighed", noNum: "Kræver ikke talkundskaber", noEng: "Kræver ikke engelsk", noLent: "Skjul udlånte spil",
+    random: "🎲 Vælg et spil til mig", reset: "Nulstil", setLink: "Angiv link til arket", reload: "Genindlæs fra arket",
+    veryEasy: "(meget let)", loading: "Indlæser…", count: "{n} af {m} spil", none: "Ingen spil passer til disse filtre.",
+    pickLabel: "Aftenens valg", again: "Et andet", close: "Luk",
+    tagNum: "🔢 Tal", tagEng: "🇬🇧 Engelsk", tagLent: "Udlånt",
+    lLoc: "Lokation:", lBorrower: "Lånt af:", lNum: "Kræver talkundskaber", lEng: "Kræver engelsk forståelse",
+    lSize: "Størrelse:", lLearn: "Læringstid:", lInsert: "Insert:", lExp: "Udvidelser:",
+    insHas: "Har insert", insNo: "Insert er unødvendigt", insMissing: "Insert mangler",
+    errCached: "Kunne ikke nå arket ({e}), så dette er den senest gemte liste.",
+    errNone: "Kunne ikke indlæse arket ({e}). Browseren er sandsynligvis blokeret fra at læse det. Tryk på ⚙ og indsæt CSV-linket fra \"Udgiv på nettet\".",
+    promptLink: "Indsæt det udgivne CSV-link til dit ark (lad feltet være tomt for at fjerne det):",
+    hour: "time", hours: "timer", langBtn: "EN"
+  }
+};
+// Sheet values are Danish; show English names when the app is in English
+const VALUE_EN = { "Arbejde": "Work", "Gæsteværelse": "Guest room", "Stue": "Living room", "Til låns": "On loan",
+  "Lille": "Small", "Mellem": "Medium", "Stor": "Large", "Kæmpe": "Huge" };
+let lang = store.get(LANG_KEY) === "da" ? "da" : "en";
+const t = (k, vars) => {
+  let v = (I18N[lang] && I18N[lang][k]) || I18N.en[k] || k;
+  if (vars) Object.keys(vars).forEach(n => { v = v.replace("{" + n + "}", vars[n]); });
+  return v;
+};
+const dispVal = v => (lang === "en" && VALUE_EN[v]) || v;
+const isLent = g => !!g.lender || g.loc.toLowerCase() === "til låns";
+const hoursLabel = m => {
+  if (m < 60) return m + " min";
+  const h = m / 60;
+  const txt = lang === "da" ? String(h).replace(".", ",") : String(h);
+  const singular = lang === "da" ? h < 2 : h === 1;
+  return txt + " " + (singular ? t("hour") : t("hours"));
+};
+function setOptions(id, vals, labelFn) {
+  const sel = $(id), cur = sel.value;
+  sel.innerHTML = '<option value="">' + esc(t("any")) + "</option>" +
+    vals.map(v => '<option value="' + v + '">' + esc(labelFn(v)) + "</option>").join("");
+  sel.value = cur;
+}
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  document.querySelectorAll("[data-i18n-title]").forEach(el => {
+    el.title = t(el.dataset.i18nTitle); el.setAttribute("aria-label", t(el.dataset.i18nTitle));
+  });
+  document.title = t("title");
+  const lb = $("lang"); lb.textContent = t("langBtn");
+  lb.title = lb.ariaLabel = lang === "da" ? "Switch to English" : "Skift til dansk";
+  setOptions("time", [15, 30, 45, 60, 90, 120, 180], hoursLabel);
+  setOptions("diff", [1, 2, 3, 4, 5], v => v === 1 ? v + " " + t("veryEasy") : String(v));
+  setOptions("learn", [2, 5, 10, 15], v => v + " min");
+  fillSelect("loc", games.map(g => g.loc));
+  fillSelect("size", games.map(g => g.size));
+  render();
+}
+
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = "", inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i++; } else inQ = false;
+      } else cell += c;
+    } else if (c === '"') inQ = true;
+    else if (c === ",") { row.push(cell); cell = ""; }
+    else if (c === "\n" || c === "\r") {
+      if (c === "\r" && text[i + 1] === "\n") i++;
+      row.push(cell); rows.push(row); row = []; cell = "";
+    } else cell += c;
+  }
+  if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
+
+function buildGames(rows) {
+  const hi = rows.findIndex(r => clean(r[0]).toLowerCase() === "navn");
+  if (hi < 0) throw new Error("Could not find the header row (a cell that says 'Navn').");
+  const norm = x => clean(x).normalize("NFC").replace(/\u00a0/g, " ").replace(/\s+/g, " ").toLowerCase();
+  const h = rows[hi].map(norm);
+  const col = (...keys) => h.findIndex(x => keys.some(k => x.startsWith(k)));
+  const c = {
+    name: col("navn"), minP: col("min spillere"), maxP: col("max spillere"),
+    minT: col("min tid"), maxT: col("max tid"), mode: col("pvp"),
+    learn: col("læringstid"), diff: col("sværhed"), insert: col("insert"),
+    exp: col("expansions"), size: col("størrelse"), loc: col("lokation"),
+    lender: col("låner"), needNum: col("kræver tal"), needEng: col("kræver engelsk")
+  };
+  // Google's feed drops the header text of number columns, so fall back to the sheet's fixed layout (A..L)
+  const defaults = { name: 0, minP: 1, maxP: 2, minT: 3, maxT: 4, mode: 5, learn: 6, diff: 7, insert: 8, exp: 9, size: 10, loc: 11, lender: 12, needNum: 13, needEng: 14 };
+  const missing = Object.keys(c).filter(k => c[k] < 0);
+  Object.keys(c).forEach(k => { if (c[k] < 0) c[k] = defaults[k]; });
+  window.__missingCols = missing;
+  window.__headers = rows[hi].map(clean).filter(Boolean);
+  window.__rawRows = rows.slice(hi, hi + 6).map(r => r.slice(0, 16).map(clean));
+  const out = [];
+  for (let i = hi + 1; i < rows.length; i++) {
+    const r = rows[i];
+    const name = clean(r[c.name]);
+    if (!name) continue;
+    const modes = clean(r[c.mode]).toUpperCase().split("/").map(s => s.trim()).filter(Boolean);
+    out.push({
+      name,
+      minP: num(r[c.minP]), maxP: num(r[c.maxP]),
+      minT: num(r[c.minT]), maxT: num(r[c.maxT]),
+      modes,
+      learn: num(r[c.learn]), diff: num(r[c.diff]),
+      insert: clean(r[c.insert]), exp: num(r[c.exp]),
+      size: clean(r[c.size]), loc: clean(r[c.loc]),
+      lender: clean(r[c.lender]),
+      needNum: yes(r[c.needNum]), needEng: yes(r[c.needEng])
+    });
+  }
+  return out;
+}
+
+async function fetchCSV(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const text = await res.text();
+  if (/^\s*<(!doctype|html)/i.test(text)) throw new Error("Google returned a web page instead of data");
+  return buildGames(parseCSV(text));
+}
+
+async function load() {
+  $("banner").innerHTML = "";
+  $("count").textContent = t("loading");
+  const custom = store.get(URL_KEY);
+  const urls = (custom ? [custom] : []).concat([CSV_URL, EXPORT_URL]);
+  let lastErr = null, ok = false;
+  for (const u of urls) {
+    try { games = await fetchCSV(u); ok = true; break; } catch (e) { lastErr = e; }
+  }
+  if (ok) {
+    store.set(CACHE_KEY, JSON.stringify(games));
+    const mc = window.__missingCols || [];
+    const withTime = games.filter(g => g.maxT != null || g.minT != null).length;
+    const withDiff = games.filter(g => g.diff != null).length;
+    const withLearn = games.filter(g => g.learn != null).length;
+    const withLoc = games.filter(g => g.loc).length;
+    const withSize = games.filter(g => g.size).length;
+    const bad = !withTime || !withDiff || !withLearn || !withLoc || !withSize;
+    if (bad) {
+      $("banner").innerHTML = '<div class="banner"><b>Some columns could not be read.</b><br>' +
+        (mc.length ? "Headers missing (used column positions): " + esc(mc.join(", ")) + ".<br>" : "") +
+        "Games with time: " + withTime + ", difficulty: " + withDiff + ", learning time: " + withLearn +
+        ", location: " + withLoc + ", size: " + withSize + " of " + games.length + ".<br>" +
+        "Headers seen: " + esc((window.__headers || []).join(" | ")) + "</div>";
+    }
+  } else {
+    let cached = null;
+    try { cached = JSON.parse(store.get(CACHE_KEY) || "null"); } catch (e) {}
+    const msg = esc(lastErr ? lastErr.message : "unknown error");
+    if (cached && cached.length) {
+      games = cached;
+      $("banner").innerHTML = '<div class="banner">' + esc(t("errCached", { e: msg })) + ' <a href="#" id="fixlink">' + esc(t("setLink")) + '</a></div>';
+    } else {
+      games = [];
+      $("banner").innerHTML = '<div class="banner">' + esc(t("errNone", { e: msg })) + ' <a href="#" id="fixlink">' + esc(t("setLink")) + '</a></div>';
+    }
+    const fl = $("fixlink");
+    if (fl) fl.onclick = e => { e.preventDefault(); setLink(); };
+  }
+  fillSelect("loc", games.map(g => g.loc));
+  fillSelect("size", games.map(g => g.size));
+  render();
+}
+
+function setLink() {
+  const cur = store.get(URL_KEY) || "";
+  const v = prompt(t("promptLink"), cur);
+  if (v === null) return;
+  if (v.trim()) store.set(URL_KEY, v.trim()); else store.del(URL_KEY);
+  load();
+}
+
+function fillSelect(id, values) {
+  const sel = $(id), cur = sel.value;
+  const uniq = [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b, "da"));
+  sel.innerHTML = '<option value="">' + esc(t("any")) + "</option>" + uniq.map(v => '<option value="' + esc(v) + '">' + esc(dispVal(v)) + "</option>").join("");
+  if (uniq.includes(cur)) sel.value = cur;
+}
+
+function activeModes() {
+  return [...document.querySelectorAll("#modes .chip[aria-pressed=true]")].map(b => b.dataset.mode);
+}
+
+function isReq(k) {
+  const b = document.querySelector('#reqs .chip[data-req="' + k + '"]');
+  return !!b && b.getAttribute("aria-pressed") === "true";
+}
+
+function filtered() {
+  const q = clean($("q").value).toLowerCase();
+  const players = num($("players").value);
+  const time = num($("time").value);
+  const diff = num($("diff").value);
+  const learn = num($("learn").value);
+  const loc = $("loc").value, size = $("size").value;
+  const modes = activeModes();
+  const noNum = isReq("num"), noEng = isReq("eng"), noLent = isReq("lent");
+  return games.filter(g => {
+    if (noNum && g.needNum) return false;
+    if (noEng && g.needEng) return false;
+    if (noLent && isLent(g)) return false;
+    if (q && !g.name.toLowerCase().includes(q)) return false;
+    if (players != null) {
+      if (g.minP == null) return false;
+      const max = g.maxP != null ? g.maxP : g.minP;
+      if (players < g.minP || players > max) return false;
+    }
+    if (time != null) {
+      const t = g.maxT != null ? g.maxT : g.minT;
+      if (t == null || t > time) return false;
+    }
+    if (diff != null && (g.diff == null || g.diff > diff)) return false;
+    if (learn != null && (g.learn == null || g.learn > learn)) return false;
+    if (loc && g.loc !== loc) return false;
+    if (size && g.size !== size) return false;
+    if (modes.length && !modes.some(m => g.modes.includes(m))) return false;
+    return true;
+  }).sort((a, b) => a.name.localeCompare(b.name, "da"));
+}
+
+const range = (a, b, unit) => {
+  if (a == null && b == null) return "?";
+  if (b == null || a === b) return a + (unit || "");
+  if (a == null) return b + (unit || "");
+  return a + "–" + b + (unit || "");
+};
+const insertText = v => ({ "Insert": t("insHas"), "Unødvændig": t("insNo"), "Mangler": t("insMissing") }[v] || v);
+
+function metaLine(g) {
+  const bits = [
+    "👥 " + range(g.minP, g.maxP),
+    "⏱ " + range(g.minT, g.maxT, " min"),
+    "⚖ " + (g.diff != null ? g.diff : "?") + "/5"
+  ];
+  const tagList = g.modes.map(m => '<span class="tag ' + (["PVP", "PVE", "TEAM"].includes(m) ? m.toLowerCase() : "") + '">' + esc(m) + "</span>");
+  if (g.needNum) tagList.push('<span class="tag req">' + esc(t("tagNum")) + "</span>");
+  if (g.needEng) tagList.push('<span class="tag req">' + esc(t("tagEng")) + "</span>");
+  if (isLent(g)) tagList.push('<span class="tag lent">' + esc(t("tagLent")) + "</span>");
+  const tags = tagList.join(" ");
+  return '<div class="meta"><span>' + bits.join('</span><span>') + "</span>" + (tags ? "<span>" + tags + "</span>" : "") + "</div>";
+}
+
+function moreLines(g) {
+  const lines = [];
+  if (g.loc) lines.push("<b>" + esc(t("lLoc")) + "</b> " + esc(dispVal(g.loc)));
+  if (g.lender) lines.push("<b>" + esc(t("lBorrower")) + "</b> " + esc(g.lender));
+  if (g.needNum) lines.push("<b>" + esc(t("lNum")) + "</b>");
+  if (g.needEng) lines.push("<b>" + esc(t("lEng")) + "</b>");
+  if (g.size) lines.push("<b>" + esc(t("lSize")) + "</b> " + esc(dispVal(g.size)));
+  if (g.learn != null) lines.push("<b>" + esc(t("lLearn")) + "</b> " + g.learn + " min");
+  if (g.insert) lines.push("<b>" + esc(t("lInsert")) + "</b> " + esc(insertText(g.insert)));
+  if (g.exp) lines.push("<b>" + esc(t("lExp")) + "</b> " + g.exp);
+  return lines.map(l => "<div>" + l + "</div>").join("");
+}
+
+function renderDiag() {
+  const el = $("diagout");
+  if (!el) return;
+  const sample = games.slice(0, 4).map(g => JSON.stringify({ name: g.name, minP: g.minP, maxP: g.maxP, minT: g.minT, maxT: g.maxT, diff: g.diff, learn: g.learn, size: g.size, loc: g.loc }));
+  el.textContent = "Raw rows from sheet:\n" + (window.__rawRows || []).map(r => JSON.stringify(r)).join("\n") +
+    "\n\nParsed:\n" + sample.join("\n") +
+    "\n\nFilter now: players=" + $("players").value + " time=" + $("time").value + " diff=" + $("diff").value +
+    " learn=" + $("learn").value + " loc=" + $("loc").value + " size=" + $("size").value;
+}
+
+function render() {
+  renderDiag();
+  const list = filtered();
+  $("count").textContent = games.length
+    ? t("count", { n: list.length, m: games.length })
+    : "";
+  $("list").innerHTML = list.length
+    ? list.map(g =>
+        '<details class="game"><summary><div class="gname">' + esc(g.name) + "</div>" + metaLine(g) +
+        '</summary><div class="more">' + moreLines(g) + "</div></details>").join("")
+    : (games.length ? '<div class="empty">' + esc(t("none")) + '</div>' : "");
+
+  if (picked) {
+    const g = games.find(x => x.name === picked);
+    if (g) {
+      $("pick").innerHTML =
+        '<div class="pick"><div class="label">' + esc(t("pickLabel")) + '</div><div class="name">' + esc(g.name) + "</div>" +
+        metaLine(g) + '<div class="more" style="border:0;padding:6px 0 0">' + moreLines(g) + "</div>" +
+        '<div class="row"><button id="again">' + esc(t("again")) + '</button><button id="closepick">' + esc(t("close")) + '</button></div></div>';
+      $("again").onclick = pickRandom;
+      $("closepick").onclick = () => { picked = null; render(); };
+      return;
+    }
+  }
+  $("pick").innerHTML = "";
+}
+
+function pickRandom() {
+  const list = filtered();
+  if (!list.length) { picked = null; render(); return; }
+  let g;
+  do { g = list[Math.floor(Math.random() * list.length)]; } while (list.length > 1 && g.name === picked);
+  picked = g.name;
+  render();
+  $("pick").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function resetAll() {
+  ["q", "players", "time", "diff", "learn", "loc", "size"].forEach(id => $(id).value = "");
+  document.querySelectorAll("#modes .chip, #reqs .chip").forEach(b => b.setAttribute("aria-pressed", "false"));
+  picked = null;
+  render();
+}
+
+["q", "players", "time", "diff", "learn", "loc", "size"].forEach(id => {
+  $(id).addEventListener("input", () => { picked = null; render(); });
+});
+document.querySelectorAll("#modes .chip, #reqs .chip").forEach(b => b.addEventListener("click", () => {
+  b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true");
+  picked = null;
+  render();
+}));
+$("random").addEventListener("click", pickRandom);
+$("reset").addEventListener("click", resetAll);
+$("refresh").addEventListener("click", load);
+$("settings").addEventListener("click", setLink);
+$("lang").addEventListener("click", () => {
+  lang = lang === "da" ? "en" : "da";
+  store.set(LANG_KEY, lang);
+  applyLang();
+});
+
+applyLang();
+load();
+</script>
+</body>
+</html>
